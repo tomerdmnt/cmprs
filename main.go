@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/c2h5oh/datasize"
+	"github.com/dsnet/compress/bzip2"
 )
 
 func check(err error) {
@@ -44,9 +45,10 @@ func main() {
 		usage()
 	}
 
-	// open the file
-	fmt.Printf("opening file %s\n", flag.Args()[0])
+	// open file for reading
+	fmt.Printf("opening %s\n", flag.Args()[0])
 	f, err := os.Open(flag.Args()[0])
+	defer f.Close()
 	check(err)
 
 	// get file size
@@ -54,9 +56,9 @@ func main() {
 	check(err)
 
 	size := fi.Size()
-	fmt.Printf("file size: %d (%s)\n", size, datasize.ByteSize(size).String())
+	fmt.Printf("file size: %d bytes (%s)\n", size, datasize.ByteSize(size).HR())
 
-	// Create a wrapper to the file reader
+	// Create a wrapper to the file reader and writer
 	cf := NewCountReader(f)
 
 	// gzip
@@ -71,8 +73,14 @@ func main() {
 	zlcount := NewCountWriter()
 	zl := zlib.NewWriter(zlcount)
 
-	buf := make([]byte, sampleSize)
+	// bzip2
+	bzcount := NewCountWriter()
+	bz, err := bzip2.NewWriter(bzcount, &bzip2.WriterConfig{ Level: 9 })
+	check(err)
 
+	w := io.MultiWriter(gz, lz, zl, bz)
+
+	buf := make([]byte, sampleSize)
 	rand.Seed(time.Now().UnixNano())
 
 	for i := 0; i < *samples; i++ {
@@ -88,33 +96,28 @@ func main() {
 		check(err)
 
 		// compress the data read
-		_, err = gz.Write(buf)
-		check(err)
-		_, err = lz.Write(buf)
-		check(err)
-		_, err = zl.Write(buf)
+		_, err = w.Write(buf)
 		check(err)
 	}
 	// close and flush
-	err = gz.Close()
-	check(err)
-	err = lz.Close()
-	check(err)
-	err = zl.Close()
-	check(err)
+	check(gz.Close())
+	check(lz.Close())
+	check(zl.Close())
+	check(bz.Close())
 
 	// print stats
 	report("gzip", cf, gzcount)
 	report("lzw", cf, lzcount)
 	report("zlib", cf, zlcount)
+	report("bzip2", cf, bzcount)
 }
 
 func report(algorithm string, cr *CountReader, cw *CountWriter) {
-	fmt.Printf("%s:\tread: %d (%s)\t\twritten: %d (%s)\t\tcompress rate: %f%%\n",
+	fmt.Printf("%s:\tread: %d bytes (%s)\t\twritten: %d bytes (%s)\t\tcompress rate: %f%%\n",
 		algorithm,
 		cr.BytesRead,
-		datasize.ByteSize(cr.BytesRead).String(),
+		datasize.ByteSize(cr.BytesRead).HR(),
 		cw.BytesWritten,
-		datasize.ByteSize(cw.BytesWritten).String(),
-		(float64(cw.BytesWritten) / float64(cr.BytesRead) * 100))
+		datasize.ByteSize(cw.BytesWritten).HR(),
+		(float64(cr.BytesRead)/float64(cw.BytesWritten)  * 100))
 }
