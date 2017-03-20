@@ -39,7 +39,6 @@ func main() {
 	err := b.UnmarshalText([]byte(*sampleSizeStr))
 	check(err)
 	sampleSize := int64(b.Bytes())
-	fmt.Println(sampleSize)
 
 	if len(flag.Args()) < 1 {
 		usage()
