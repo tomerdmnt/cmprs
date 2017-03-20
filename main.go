@@ -33,13 +33,13 @@ func usage() {
 func main() {
 	samples := flag.Int("nsamples", 100, "number of samples")
 	sampleSizeStr := flag.String("ssize", "1kb", "sample size")
+	flag.Parse()
 
 	var b datasize.ByteSize
 	err := b.UnmarshalText([]byte(*sampleSizeStr))
 	check(err)
 	sampleSize := int64(b.Bytes())
-
-	flag.Parse()
+	fmt.Println(sampleSize)
 
 	if len(flag.Args()) < 1 {
 		usage()
