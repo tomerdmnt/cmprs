@@ -16,12 +16,12 @@ estimate compression rate of large files
 ## Example
 
 ```shell
-$ ./cmprs -nsamples 30 -ssize 2kb cmprs 
-opening cmprs
+$./cmprs -nsamples 30 -ssize 2kb ./cmprs 
+opening ./cmprs
 file size: 2443751 bytes (2.330543.1 MB)
-gzip:   read: 30720 bytes (30.000000.1 KB)              written: 12102 bytes (11.818359.1 KB)           compress rate: 253.842340%
-lzw:    read: 30720 bytes (30.000000.1 KB)              written: 17743 bytes (17.327148.1 KB)           compress rate: 173.138703%
-zlib:   read: 30720 bytes (30.000000.1 KB)              written: 12090 bytes (11.806641.1 KB)           compress rate: 254.094293%
-bzip2:  read: 30720 bytes (30.000000.1 KB)              written: 13083 bytes (12.776367.1 KB)           compress rate: 234.808530%
+gzip:   read: 61440 bytes (60.000000.1 KB)              written: 27271 bytes (26.631836.1 KB)           compress rate: 225.294269%
+lzw:    read: 61440 bytes (60.000000.1 KB)              written: 38289 bytes (37.391602.1 KB)           compress rate: 160.463841%
+zlib:   read: 61440 bytes (60.000000.1 KB)              written: 27259 bytes (26.620117.1 KB)           compress rate: 225.393448%
+bzip2:  read: 61440 bytes (60.000000.1 KB)              written: 28826 bytes (28.150391.1 KB)           compress rate: 213.140914%
 ```
 
