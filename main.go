@@ -62,20 +62,21 @@ func main() {
 
 	// gzip
 	gzcount := NewCountWriter()
-	gz := gzip.NewWriter(gzcount)
+	gz := NewTimedWriter(gzip.NewWriter(gzcount))
 
 	// lzw
 	lzcount := NewCountWriter()
-	lz := lzw.NewWriter(lzcount, lzw.LSB, 8)
+	lz := NewTimedWriter(lzw.NewWriter(lzcount, lzw.LSB, 8))
 
 	// zlib
 	zlcount := NewCountWriter()
-	zl := zlib.NewWriter(zlcount)
+	zl := NewTimedWriter(zlib.NewWriter(zlcount))
 
 	// bzip2
 	bzcount := NewCountWriter()
-	bz, err := bzip2.NewWriter(bzcount, &bzip2.WriterConfig{ Level: 9 })
+	bzwriter, err := bzip2.NewWriter(bzcount, &bzip2.WriterConfig{ Level: 9 })
 	check(err)
+	bz := NewTimedWriter(bzwriter)
 
 	w := io.MultiWriter(gz, lz, zl, bz)
 
@@ -105,18 +106,19 @@ func main() {
 	check(bz.Close())
 
 	// print stats
-	report("gzip", cf, gzcount)
-	report("lzw", cf, lzcount)
-	report("zlib", cf, zlcount)
-	report("bzip2", cf, bzcount)
+	report("gzip", cf, gzcount, gz)
+	report("lzw", cf, lzcount, lz)
+	report("zlib", cf, zlcount, zl)
+	report("bzip2", cf, bzcount, bz)
 }
 
-func report(algorithm string, cr *CountReader, cw *CountWriter) {
-	fmt.Printf("%s:\tread: %d bytes (%s)\t\twritten: %d bytes (%s)\t\tcompress rate: %f%%\n",
+func report(algorithm string, cr *CountReader, cw *CountWriter, tw *TimedWriter) {
+	fmt.Printf("%s:\tread: %d bytes (%s)\twritten: %d bytes (%s)\tcompress rate: %f%%\trate:%s/s\n",
 		algorithm,
 		cr.BytesRead,
 		datasize.ByteSize(cr.BytesRead).HR(),
 		cw.BytesWritten,
 		datasize.ByteSize(cw.BytesWritten).HR(),
-		(float64(cr.BytesRead)/float64(cw.BytesWritten)  * 100))
+		(float64(cr.BytesRead)/float64(cw.BytesWritten)  * 100),
+		datasize.ByteSize(float64(cw.BytesWritten)/tw.Elapsed.Seconds()).HR())
 }
